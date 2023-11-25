@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34310.174
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GummyCat", "src\GummyCat\GummyCat.csproj", "{A4D6DBB9-03E0-47DE-8F66-968C9F2D2053}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A4D6DBB9-03E0-47DE-8F66-968C9F2D2053}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4D6DBB9-03E0-47DE-8F66-968C9F2D2053}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4D6DBB9-03E0-47DE-8F66-968C9F2D2053}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4D6DBB9-03E0-47DE-8F66-968C9F2D2053}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {69297DDB-E418-483D-B10E-35909473617E}
+	EndGlobalSection
+EndGlobal

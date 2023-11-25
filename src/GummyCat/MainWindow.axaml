@@ -1,0 +1,109 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:gummyCat="clr-namespace:GummyCat"
+        mc:Ignorable="d" d:DesignWidth="1600" d:DesignHeight="800"
+		Width="1600" Height="800"
+        x:Class="GummyCat.MainWindow" KeyDown="Window_KeyDown"
+        Title="GummyCat" Loaded="Window_Loaded">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="auto" />
+			<RowDefinition />
+			<RowDefinition Height="auto"/>
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition />
+			<ColumnDefinition Width="200" />
+		</Grid.ColumnDefinitions>
+
+		<StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="5 5 5 5">
+			<StackPanel.Styles>
+				<Style Selector="TextBlock">
+					<Setter Property="VerticalAlignment" Value="Center" />
+					<Setter Property="FontSize" Value="16" />
+				</Style>
+
+				<Style Selector="RadioButton">
+					<Setter Property="FontSize" Value="16" />
+					<Setter Property="Margin" Value="5 0 0 0" />
+				</Style>
+
+				<Style Selector="CheckBox">
+                    <Setter Property="FontSize" Value="16" />
+					<Setter Property="Margin" Value="20 0 0 0" />
+					<Setter Property="Padding" Value="5 0 5 0" />
+                </Style>
+			</StackPanel.Styles>
+			
+			<Menu Background="Transparent" Margin="0 -1 0 0" Padding="0">
+				<MenuItem FontSize="16"  VerticalAlignment="Center">
+					<MenuItem.Header>
+						<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+							<TextBlock Text="Process: " VerticalAlignment="Center"  />
+							<TextBlock x:Name="TextPid" />
+						</StackPanel>
+					</MenuItem.Header>
+					<MenuItem Header="_Open" Click="MenuOpen_Click" />
+					<MenuItem Header="_Save as" Click="MenuSave_Click" />
+					<MenuItem Header="_Quit" Click="MenuQuit_Click" />
+				</MenuItem>
+			</Menu>
+			<TextBlock Text="Private bytes: " Margin="20 0 0 0" />
+			<TextBlock x:Name="TextPrivateBytes" />
+			<TextBlock Text="Heaps: " Margin="20 0 0 0" />
+			<TextBlock x:Name="TextNbHeaps" />
+			<TextBlock Text="Throughput cost: " Margin="20 0 0 0" />
+			<TextBlock x:Name="TextThroughputCost" />
+			<TextBlock Text="Size: " Margin="20 0 0 0" />
+			<RadioButton x:Name="RadioReal" GroupName="Size" IsChecked="True" Content="Real" Checked="RadioReal_Checked" />
+			<RadioButton x:Name="RadioCommitted" GroupName="Size" IsChecked="False" Content="Committed" Checked="RadioCommitted_Checked" />
+			<RadioButton x:Name="RadioLogical" GroupName="Size" IsChecked="False" Content="Logical" Checked="RadioLogical_Checked"  />
+			<CheckBox x:Name="ToggleEmpty" Content="Show empty memory" IsChecked="False" Click="ToggleEmpty_Click" />
+			<CheckBox x:Name="ToggleTiles" Content="Tiled view" IsChecked="False" Click="ToggleTiles_Click" />
+		</StackPanel>
+
+		<ScrollViewer Grid.Row="1" Grid.Column="0" VerticalScrollBarVisibility="Auto">
+			<WrapPanel x:Name="PanelRegions" Orientation="Horizontal" />
+		</ScrollViewer>
+		<StackPanel x:Name="PanelHeaps" Grid.Row="1" Grid.Column="0">
+		</StackPanel>
+
+		<gummyCat:RegionsGrid x:Name="RegionsGrid" Grid.Row="1" Grid.Column="0" />
+
+		<GridSplitter Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="5" />
+
+		<ListBox x:Name="ListGc" Grid.Row="1" Grid.Column="1" ItemsSource="{Binding Path=GCs}" x:DataType="gummyCat:MainWindow" >
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<StackPanel>
+						<StackPanel Orientation="Horizontal">
+							<TextBlock Text="{Binding Path=Number, StringFormat='#{0} '}" />
+							<TextBlock Text="{Binding Path=Type}" FontWeight="Bold" />
+							<TextBlock Text="{Binding Path=Generation, StringFormat=' ({0})'}" FontWeight="Bold" />
+						</StackPanel>
+						<TextBlock Text="{Binding Path=Reason}" />
+					</StackPanel>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+
+		<Grid Grid.Row="2" Grid.Column="0">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="Auto" />
+				<ColumnDefinition />
+			</Grid.ColumnDefinitions>
+
+			<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="5 0 5 0">
+				<Button x:Name="ButtonPlay" Content="⏸" Foreground="DarkBlue" Click="ButtonPlay_Click" />
+				<TextBox x:Name="TextStep" Text="0 / 0" IsReadOnly="True" TextAlignment="Center" VerticalAlignment="Center"/>
+				<ScrollBar x:Name="SliderFrames" Orientation="Horizontal" Width="400" Minimum="0" Maximum="0" SmallChange="1" LargeChange="10" ValueChanged="SliderFrames_ValueChanged" />
+			</StackPanel>
+
+			<WrapPanel x:Name="PanelLegend" Grid.Row="0" Grid.Column="1" TextElement.FontSize="14">
+			</WrapPanel>
+		</Grid>
+
+	</Grid>
+</Window>

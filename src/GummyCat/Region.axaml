@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="GummyCat.Region">
+	<UserControl.Transitions>
+		<Transitions>
+			<DoubleTransition Property="Width" Duration="0:0:1">
+				<DoubleTransition.Easing>
+					<QuadraticEaseInOut />
+				</DoubleTransition.Easing>
+			</DoubleTransition>
+		</Transitions>
+	</UserControl.Transitions>
+	<Grid>
+		<Rectangle x:Name="MainRectangle" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+			<Rectangle.Fill>
+				<SolidColorBrush>
+					<SolidColorBrush.Transitions>
+						<Transitions>
+							<ColorTransition Property="Color" Duration="0:0:1" />
+						</Transitions>
+					</SolidColorBrush.Transitions>
+				</SolidColorBrush>
+			</Rectangle.Fill>
+		</Rectangle>
+
+		<Rectangle x:Name="Gen0Rectangle" Width="0" VerticalAlignment="Stretch" HorizontalAlignment="Left" IsVisible="False" />
+		<Rectangle x:Name="Gen1Rectangle" Width="0" VerticalAlignment="Stretch" HorizontalAlignment="Left" IsVisible="False" />
+		<Rectangle x:Name="Gen2Rectangle" Width="0" VerticalAlignment="Stretch" HorizontalAlignment="Left" IsVisible="False" />
+
+		<Rectangle x:Name="FillRectangle" HorizontalAlignment="Left" VerticalAlignment="Stretch" Fill="Black" Opacity=".2">
+			<Rectangle.Transitions>
+				<Transitions>
+					<DoubleTransition Property="Width" Duration="0:0:1">
+						<DoubleTransition.Easing>
+							<SineEaseInOut />
+						</DoubleTransition.Easing>
+					</DoubleTransition>
+				</Transitions>
+			</Rectangle.Transitions>
+		</Rectangle>
+
+		<TextBlock x:Name="TextHeap" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+	</Grid>
+</UserControl>
