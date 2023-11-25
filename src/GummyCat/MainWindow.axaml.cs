@@ -578,7 +578,8 @@ public partial class MainWindow : Window
     {
         var file = await StorageProvider.SaveFilePickerAsync(new()
         {
-            DefaultExtension = ".json"
+            DefaultExtension = ".json",
+            FileTypeChoices = new[] { new FilePickerFileType("JSON") { Patterns = new[] { "*.json" } } }
         });
 
         if (file == null)
@@ -622,5 +623,4 @@ public partial class MainWindow : Window
             TogglePlaying();
         }
     }
-
 }
