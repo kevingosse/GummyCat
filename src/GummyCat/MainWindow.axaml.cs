@@ -116,13 +116,8 @@ public partial class MainWindow : Window
                 Load(args[1]);
             }
         }
-        else
-        {
-            _ = Task.Factory.StartNew(() => Listen(null), TaskCreationOptions.LongRunning);
-        }
 
         _playTimer.Start();
-        _ = Task.Factory.StartNew(InspectProcess, TaskCreationOptions.LongRunning);
     }
 
     private void Load(string fileName)
@@ -164,20 +159,19 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Listen(int? pid)
+    private void Listen(int pid)
     {
-        pid ??= GetProcessId();
-
-        _pid = pid.Value;
+        _pid = pid;
 
         Dispatcher.UIThread.InvokeAsync(() =>
         {
             Title += $" - Attached to {pid}";
         });
 
+        _ = Task.Factory.StartNew(InspectProcess, TaskCreationOptions.LongRunning);
         _mutex.Set();
 
-        _session = CreateSession(pid.Value);
+        _session = CreateSession(pid);
 
         var source = new EventPipeEventSource(_session.EventStream);
 
@@ -275,6 +269,33 @@ public partial class MainWindow : Window
         return session;
     }
 
+    private void InspectMemoryDump(string path)
+    {
+        using var dataTarget = DataTarget.LoadDump(path);
+
+        var runtime = dataTarget.ClrVersions[0].CreateRuntime();
+
+        if (!runtime.Heap.CanWalkHeap)
+        {
+            return;
+        }
+
+        var subHeaps = runtime.Heap.SubHeaps.Select(s => new SubHeap(s)).ToList();
+
+        var frame = new Frame
+        {
+            PrivateMemoryMb = 0,
+            SubHeaps = subHeaps,
+            GcNumber = GCs.Count > 0 ? GCs[0].Number : -1
+        };
+
+        Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            ClearFrames();
+            AddFrame(frame);
+        });
+    }
+
     private void InspectProcess()
     {
         while (true)
@@ -309,6 +330,16 @@ public partial class MainWindow : Window
 
             Dispatcher.UIThread.InvokeAsync(() => AddFrame(frame));
         }
+    }
+
+    private void ClearFrames()
+    {
+        _frames.Clear();
+        RegionsGrid.SetRegions(new List<SubHeap>());
+        PanelRegions.Children.Clear();
+        SliderFrames.Minimum = 0;
+        SliderFrames.Value = 0;
+        SliderFrames.Maximum = 0;
     }
 
     private void AddFrame(Frame frame)
@@ -433,27 +464,24 @@ public partial class MainWindow : Window
 
                 if (_realSize && _showEmptyMemory && lastRegionEnd != 0)
                 {
-                    if (start - lastRegionEnd >= 64)
+                    var diff = start - lastRegionEnd;
+                    var diffInMB = ToMB(diff);
+
+                    var placeholder = new Grid { Width = diffInMB * 10, Height = 40 };
+
+                    placeholder.Children.Add(new Rectangle { Fill = new SolidColorBrush(Colors.LightGray), });
+
+                    placeholder.Children.Add(new TextBlock
                     {
-                        var diff = start - lastRegionEnd;
-                        var diffInMB = ToMB(diff);
+                        HorizontalAlignment = diffInMB < 10 ? HorizontalAlignment.Center : HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Text = $"{diffInMB} MB",
+                        FontSize = 14,
+                        FontWeight = FontWeight.Bold,
+                        Margin = diffInMB < 10 ? new Thickness(0) : new Thickness(5)
+                    });
 
-                        var placeholder = new Grid { Width = diffInMB * 10, Height = 40 };
-
-                        placeholder.Children.Add(new Rectangle { Fill = new SolidColorBrush(Colors.LightGray), });
-
-                        placeholder.Children.Add(new TextBlock
-                        {
-                            HorizontalAlignment = diffInMB < 10 ? HorizontalAlignment.Center : HorizontalAlignment.Left,
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Text = $"{diffInMB} MB",
-                            FontSize = 14,
-                            FontWeight = FontWeight.Bold,
-                            Margin = diffInMB < 10 ? new Thickness(0) : new Thickness(5)
-                        });
-
-                        PanelRegions.Children.Add(placeholder);
-                    }
+                    PanelRegions.Children.Add(placeholder);
                 }
 
                 lastRegionEnd = end;
@@ -466,21 +494,6 @@ public partial class MainWindow : Window
     private static double ToMB(ulong length)
     {
         return Math.Round(length / (1024.0 * 1024), 2);
-    }
-
-    private static int GetProcessId()
-    {
-        while (true)
-        {
-            var processes = Process.GetProcessesByName("DatasTest");
-
-            if (processes.Length > 0)
-            {
-                return processes[0].Id;
-            }
-
-            Thread.Sleep(500);
-        }
     }
 
     private void TogglePlaying(bool? newValue = null)
@@ -592,6 +605,31 @@ public partial class MainWindow : Window
         var json = JsonConvert.SerializeObject(session);
 
         await File.WriteAllTextAsync(file.TryGetLocalPath()!, json);
+    }
+
+    private void MenuAttach_Click(object? sender, RoutedEventArgs e)
+    {
+
+    }
+
+    private async void MenuDump_Click(object? sender, RoutedEventArgs e)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new()
+        {
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("Memory dumps") { Patterns = new[] { "*.dmp" } },
+                new FilePickerFileType("Any file") { Patterns = new[] { "*" } },
+            }
+        });
+
+        if (files.Count == 0)
+        {
+            return;
+        }
+
+        var file = files[0].TryGetLocalPath()!;
+        InspectMemoryDump(file);
     }
 
     private void PlayTimer_Tick(object? sender, EventArgs e)

@@ -45,8 +45,10 @@
 							<TextBlock x:Name="TextPid" />
 						</StackPanel>
 					</MenuItem.Header>
-					<MenuItem Header="_Open" Click="MenuOpen_Click" />
-					<MenuItem Header="_Save as" Click="MenuSave_Click" />
+					<MenuItem Header="_Attach to process" Click="MenuAttach_Click" />
+					<MenuItem Header="Open memory _dump" Click="MenuDump_Click" />
+					<MenuItem Header="_Open trace" Click="MenuOpen_Click" />
+					<MenuItem Header="_Save trace as" Click="MenuSave_Click" />
 					<MenuItem Header="_Quit" Click="MenuQuit_Click" />
 				</MenuItem>
 			</Menu>
