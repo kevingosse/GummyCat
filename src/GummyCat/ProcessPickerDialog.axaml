@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:GummyCat.Models"
+        xmlns:gummyCat="clr-namespace:GummyCat"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="GummyCat.ProcessPickerDialog"
+        Title="ProcessPickerDialog"
+        Padding="10">
+  <Grid RowDefinitions="Auto * Auto">
+    <TextBlock Text="Attach to process..." Grid.Row="0" />
+
+    <DataGrid
+      x:Name="GridProcesses"
+      Grid.Row="1"
+      Margin="0 10 0 10"
+      AutoGenerateColumns="True"
+      ItemsSource="{Binding Path=Processes}"
+      x:DataType="gummyCat:ProcessPickerDialog"
+      IsReadOnly="True"
+      SelectionMode="Single"
+      DoubleTapped="GridProcesses_DoubleTapped">
+    </DataGrid>
+
+    <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right">
+      <Button x:Name="ButtonAttach" Content="Attach" IsEnabled="{Binding Path=#GridProcesses.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Click="ButtonAttach_Click" />
+      <Button x:Name="ButtonCancel" Margin="10 0 0 0" Content="Cancel" Click="ButtonCancel_Click" />
+    </StackPanel>
+  </Grid>
+</Window>

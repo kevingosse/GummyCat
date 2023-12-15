@@ -109,7 +109,7 @@ public partial class MainWindow : Window
         {
             if (int.TryParse(args[1], out var pid))
             {
-                _ = Task.Factory.StartNew(() => Listen(pid), TaskCreationOptions.LongRunning);
+                AttachToProcess(pid);
             }
             else
             {
@@ -118,6 +118,11 @@ public partial class MainWindow : Window
         }
 
         _playTimer.Start();
+    }
+
+    private void AttachToProcess(int pid)
+    {
+        _ = Task.Factory.StartNew(() => Listen(pid), TaskCreationOptions.LongRunning);
     }
 
     private void Load(string fileName)
@@ -391,7 +396,7 @@ public partial class MainWindow : Window
         var subHeaps = frame.SubHeaps;
         var privateMemoryMb = frame.PrivateMemoryMb;
 
-        TextPid.Text = _pid.ToString();
+        TextTarget.Text = $"Process: {_pid}";
         TextNbHeaps.Text = subHeaps.Count.ToString();
 
         TextPrivateBytes.Text = $"{(long)privateMemoryMb} MB";
@@ -607,9 +612,14 @@ public partial class MainWindow : Window
         await File.WriteAllTextAsync(file.TryGetLocalPath()!, json);
     }
 
-    private void MenuAttach_Click(object? sender, RoutedEventArgs e)
+    private async void MenuAttach_Click(object? sender, RoutedEventArgs e)
     {
+        var target = await new ProcessPickerDialog().ShowDialog<TargetProcess?>(this);
 
+        if (target != null)
+        {
+            AttachToProcess(target.Pid);
+        }
     }
 
     private async void MenuDump_Click(object? sender, RoutedEventArgs e)

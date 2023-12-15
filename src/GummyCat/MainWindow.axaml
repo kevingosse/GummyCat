@@ -38,11 +38,10 @@
 			</StackPanel.Styles>
 			
 			<Menu Background="Transparent" Margin="0 -1 0 0" Padding="0">
-				<MenuItem FontSize="16"  VerticalAlignment="Center">
+				<MenuItem FontSize="16"  VerticalAlignment="Center" IsSubMenuOpen="True">
 					<MenuItem.Header>
 						<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-							<TextBlock Text="Process: " VerticalAlignment="Center"  />
-							<TextBlock x:Name="TextPid" />
+							<TextBlock x:Name="TextTarget" Text="Pick target..." VerticalAlignment="Center"  />
 						</StackPanel>
 					</MenuItem.Header>
 					<MenuItem Header="_Attach to process" Click="MenuAttach_Click" />
