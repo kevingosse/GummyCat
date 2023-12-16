@@ -55,8 +55,6 @@
 			<TextBlock x:Name="TextPrivateBytes" />
 			<TextBlock Text="Heaps: " Margin="20 0 0 0" />
 			<TextBlock x:Name="TextNbHeaps" />
-			<TextBlock Text="Throughput cost: " Margin="20 0 0 0" />
-			<TextBlock x:Name="TextThroughputCost" />
 			<TextBlock Text="Size: " Margin="20 0 0 0" />
 			<RadioButton x:Name="RadioReal" GroupName="Size" IsChecked="True" Content="Real" Checked="RadioReal_Checked" />
 			<RadioButton x:Name="RadioCommitted" GroupName="Size" IsChecked="False" Content="Committed" Checked="RadioCommitted_Checked" />

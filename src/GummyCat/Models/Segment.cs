@@ -14,7 +14,7 @@ public class Segment
         Start = segment.Start;
         if (segment.Kind != GCSegmentKind.Ephemeral)
         {
-            Start -= 40; // all regions have a "header" of 40 bytes (plug)
+            //Start -= 40; // all regions have a "header" of 40 bytes (plug)
         }
         Flags = segment.Flags;
         Address = segment.Address;

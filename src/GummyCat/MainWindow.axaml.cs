@@ -24,8 +24,6 @@ namespace GummyCat;
 
 public partial class MainWindow : Window
 {
-    private EventPipeSession _session;
-    private int _pid;
     private readonly ManualResetEventSlim _mutex = new();
     private bool _realSize = true;
     private bool _showReservedMemory = true;
@@ -34,7 +32,9 @@ public partial class MainWindow : Window
     private List<Frame> _frames = new();
     private Frame? _activeFrame;
     private bool _playing = true;
-    private DispatcherTimer _playTimer;
+    private readonly DispatcherTimer _playTimer;
+    private Task? _listenToProcessTask;
+    private CancellationTokenSource _cts = new();
 
     public MainWindow()
     {
@@ -109,7 +109,7 @@ public partial class MainWindow : Window
         {
             if (int.TryParse(args[1], out var pid))
             {
-                AttachToProcess(pid);
+                AttachToProcess(pid, _cts.Token);
             }
             else
             {
@@ -120,16 +120,14 @@ public partial class MainWindow : Window
         _playTimer.Start();
     }
 
-    private void AttachToProcess(int pid)
+    private void AttachToProcess(int pid, CancellationToken cancellationToken)
     {
-        _ = Task.Factory.StartNew(() => Listen(pid), TaskCreationOptions.LongRunning);
+        TextTarget.Text = $"Process: {pid}";
+        _listenToProcessTask = Task.Factory.StartNew(() => Listen(pid, cancellationToken), TaskCreationOptions.LongRunning).Unwrap();
     }
 
     private void Load(string fileName)
     {
-        _pid = 0;
-        _session?.Stop();
-
         var json = File.ReadAllText(fileName);
 
         var session = JsonConvert.DeserializeObject<Session>(json)!;
@@ -164,102 +162,42 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Listen(int pid)
+    private Task Listen(int pid, CancellationToken cancellationToken)
     {
-        _pid = pid;
-
-        Dispatcher.UIThread.InvokeAsync(() =>
-        {
-            Title += $" - Attached to {pid}";
-        });
-
-        _ = Task.Factory.StartNew(InspectProcess, TaskCreationOptions.LongRunning);
+        var inspectProcessTask = Task.Factory.StartNew(() => InspectProcess(pid, cancellationToken), TaskCreationOptions.LongRunning);
         _mutex.Set();
 
-        _session = CreateSession(pid);
-
-        var source = new EventPipeEventSource(_session.EventStream);
+        var session = CreateSession(pid);
+        var source = new EventPipeEventSource(session.EventStream);
 
         source.NeedLoadedDotNetRuntimes();
         source.AddCallbackOnProcessStart(process =>
         {
             process.AddCallbackOnDotNetRuntimeLoad(runtime =>
             {
-                runtime.GCEnd += GCEnd;
+                runtime.GCEnd += (p, gc) => GCEnd(p, gc, cancellationToken);
             });
         });
 
-        source.Clr.All += Clr_All;
-        source.AllEvents += Source_AllEvents;
-        source.Process();
-    }
-
-    private unsafe void Source_AllEvents(TraceEvent obj)
-    {
-        if (obj.ID == (TraceEventID)39)
+        cancellationToken.Register(() =>
         {
-            var ptr = (byte*)obj.DataStart;
+            source.Dispose();
+            session.Dispose();
+        });
 
-            var eventName = new string((char*)ptr);
+        source.Process();
 
-            if (eventName != "HeapCountTuning")
-            {
-                return;
-            }
-
-            ptr += eventName.Length * 2 + 2;
-
-            ptr += 6; // I don't know why
-
-            var nHeaps = *(short*)ptr;
-            var gcIndex = *(long*)(ptr + 2);
-            var medianThroughputCostPercent = *(float*)(ptr + 10);
-            var smoothedMedianThroughputCostPercent = *(float*)(ptr + 14);
-            var tcpReductionPerStepUp = *(float*)(ptr + 18);
-            var tcpIncreasePerStepDown = *(float*)(ptr + 22);
-            var scpIncreasePerStepUp = *(float*)(ptr + 26);
-            var scpDecreasePerStepDown = *(float*)(ptr + 30);
-
-            // Display all those values
-            Debug.WriteLine($"nHeaps: {nHeaps}, gcIndex: {gcIndex}, medianThroughputCostPercent: {medianThroughputCostPercent}, smoothedMedianThroughputCostPercent: {smoothedMedianThroughputCostPercent}, tcpReductionPerStepUp: {tcpReductionPerStepUp}, tcpIncreasePerStepDown: {tcpIncreasePerStepDown}, scpIncreasePerStepUp: {scpIncreasePerStepUp}, scpDecreasePerStepDown: {scpDecreasePerStepDown}");
-
-            Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                TextThroughputCost.Text = $"{medianThroughputCostPercent:0.00}%";
-            });
-
-            if (medianThroughputCostPercent > 10.0f)
-            {
-                // Increase aggressively
-            }
-            else if (smoothedMedianThroughputCostPercent > 5.0f)
-            {
-                // Increase
-            }
-            else if ((tcpReductionPerStepUp - scpIncreasePerStepUp) >= 1.0f)
-            {
-                // Increase
-            }
-            else if (smoothedMedianThroughputCostPercent < 1.0f && (scpDecreasePerStepDown - tcpIncreasePerStepDown) >= 1.0f)
-            {
-                // Reduction
-            }
-        }
+        return inspectProcessTask;
     }
 
-    private void Clr_All(TraceEvent obj)
-    {
-    }
-
-    private void GCEnd(TraceProcess process, TraceGC gc)
+    private void GCEnd(TraceProcess process, TraceGC gc, CancellationToken cancellationToken)
     {
         Dispatcher.UIThread.InvokeAsync(() =>
         {
-            if (_pid != 0)
-            {
-                GCs.Insert(0, new(gc));
-            }
-        });
+            GCs.Insert(0, new(gc));
+        },
+        DispatcherPriority.Default,
+        cancellationToken);
 
         _mutex.Set();
     }
@@ -294,26 +232,34 @@ public partial class MainWindow : Window
             GcNumber = GCs.Count > 0 ? GCs[0].Number : -1
         };
 
-        Dispatcher.UIThread.InvokeAsync(() =>
+        Dispatcher.UIThread.InvokeAsync(async () =>
         {
-            ClearFrames();
+            await ClearAll();
             AddFrame(frame);
         });
     }
 
-    private void InspectProcess()
+    private void InspectProcess(int pid, CancellationToken cancellationToken)
     {
         while (true)
         {
-            _mutex.Wait();
-            _mutex.Reset();
-
-            if (_pid == 0)
+            try
             {
-                continue;
+                _mutex.Wait(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
             }
 
-            using var dataTarget = DataTarget.AttachToProcess(_pid, true);
+            _mutex.Reset();
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+
+            using var dataTarget = DataTarget.AttachToProcess(pid, true);
 
             var runtime = dataTarget.ClrVersions[0].CreateRuntime();
 
@@ -322,7 +268,7 @@ public partial class MainWindow : Window
                 continue;
             }
 
-            using var process = Process.GetProcessById(_pid);
+            using var process = Process.GetProcessById(pid);
             var privateMemoryMb = process.PrivateMemorySize64 / (1024.0 * 1024);
             var subHeaps = runtime.Heap.SubHeaps.Select(s => new SubHeap(s)).ToList();
 
@@ -333,12 +279,20 @@ public partial class MainWindow : Window
                 GcNumber = GCs.Count > 0 ? GCs[0].Number : -1
             };
 
-            Dispatcher.UIThread.InvokeAsync(() => AddFrame(frame));
+            Dispatcher.UIThread.InvokeAsync(() => AddFrame(frame), DispatcherPriority.Default, cancellationToken);
         }
     }
 
-    private void ClearFrames()
+    private async Task ClearAll()
     {
+        await _cts.CancelAsync();
+        _cts = new();
+
+        if (_listenToProcessTask != null)
+        {
+            await _listenToProcessTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing | ConfigureAwaitOptions.ContinueOnCapturedContext);
+        }
+
         _frames.Clear();
         RegionsGrid.SetRegions(new List<SubHeap>());
         PanelRegions.Children.Clear();
@@ -396,7 +350,6 @@ public partial class MainWindow : Window
         var subHeaps = frame.SubHeaps;
         var privateMemoryMb = frame.PrivateMemoryMb;
 
-        TextTarget.Text = $"Process: {_pid}";
         TextNbHeaps.Text = subHeaps.Count.ToString();
 
         TextPrivateBytes.Text = $"{(long)privateMemoryMb} MB";
@@ -584,6 +537,7 @@ public partial class MainWindow : Window
             return;
         }
 
+        await ClearAll();
         Load(files[0].TryGetLocalPath()!);
     }
 
@@ -618,7 +572,8 @@ public partial class MainWindow : Window
 
         if (target != null)
         {
-            AttachToProcess(target.Pid);
+            await ClearAll();
+            AttachToProcess(target.Pid, _cts.Token);
         }
     }
 

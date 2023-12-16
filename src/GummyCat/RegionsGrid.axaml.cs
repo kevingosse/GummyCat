@@ -71,11 +71,15 @@ namespace GummyCat
                 if (lastRegionEnd != 0)
                 {
                     var emptySize = start - lastRegionEnd;
-                    var emptySizeUnits = (int)ToUnits(emptySize);
 
-                    _regions.Add((index, index + emptySizeUnits, null, null));
+                    if (emptySize > 40)
+                    {
+                        var emptySizeUnits = (int)ToUnits(emptySize);
 
-                    index += emptySizeUnits;
+                        _regions.Add((index, index + emptySizeUnits, null, null));
+
+                        index += emptySizeUnits;
+                    }
                 }
 
                 var size = end - start;
@@ -90,7 +94,7 @@ namespace GummyCat
 
         private static double ToUnits(ulong length)
         {
-            return Math.Floor(length / (1024.0 * 1024));
+            return Math.Ceiling(length / (1024.0 * 1024));
         }
 
         public override void Render(DrawingContext drawingContext)
