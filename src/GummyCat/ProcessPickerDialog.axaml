@@ -7,7 +7,9 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="GummyCat.ProcessPickerDialog"
         Title="ProcessPickerDialog"
-        Padding="10">
+        Padding="10"
+        Width="500"
+        Height="400">
   <Grid RowDefinitions="Auto * Auto">
     <TextBlock Text="Attach to process..." Grid.Row="0" />
 
@@ -15,12 +17,15 @@
       x:Name="GridProcesses"
       Grid.Row="1"
       Margin="0 10 0 10"
-      AutoGenerateColumns="True"
       ItemsSource="{Binding Path=Processes}"
       x:DataType="gummyCat:ProcessPickerDialog"
       IsReadOnly="True"
       SelectionMode="Single"
       DoubleTapped="GridProcesses_DoubleTapped">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Name" Binding="{Binding Path=Name}" />
+        <DataGridTextColumn Header="PID" Binding="{Binding Path=Pid}" />
+      </DataGrid.Columns>
     </DataGrid>
 
     <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right">

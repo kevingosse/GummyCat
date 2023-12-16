@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Microsoft.Diagnostics.NETCore.Client;
 
 namespace GummyCat;
 
@@ -14,33 +15,17 @@ public partial class ProcessPickerDialog : Window
 
         DataContext = this;
 
-        var processes = Process.GetProcesses();
+        var pids = DiagnosticsClient.GetPublishedProcesses();
 
-        foreach (var process in processes.OrderByDescending(GetProcessStartTime))
-        {
-            Processes.Add(new Models.TargetProcess
-            {
-                Name = process.ProcessName,
-                Pid = process.Id
-            });
-        }
+        Processes = new(
+            pids.Where(pid => pid != Environment.ProcessId)
+                .Select(pid => new Models.TargetProcess(Process.GetProcessById(pid)))
+                .OrderByDescending(p => p.StartTime));
 
         InitializeComponent();
     }
 
-    public ObservableCollection<Models.TargetProcess> Processes { get; set; } = new();
-
-    private DateTime? GetProcessStartTime(Process process)
-    {
-        try
-        {            
-            return process.StartTime;
-        }
-        catch
-        {
-            return null;
-        }
-    }
+    public ObservableCollection<Models.TargetProcess> Processes { get; set; }
 
     private void GridProcesses_DoubleTapped(object? sender, TappedEventArgs e)
     {
