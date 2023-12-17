@@ -232,9 +232,9 @@ public partial class MainWindow : Window
             GcNumber = GCs.Count > 0 ? GCs[0].Number : -1
         };
 
-        Dispatcher.UIThread.InvokeAsync(async () =>
+        Dispatcher.UIThread.InvokeAsync(() =>
         {
-            await ClearAll();
+            TextTarget.Text = $"Dump: {System.IO.Path.GetFileName(path)}";
             AddFrame(frame);
         });
     }
@@ -594,6 +594,7 @@ public partial class MainWindow : Window
         }
 
         var file = files[0].TryGetLocalPath()!;
+        await ClearAll();
         InspectMemoryDump(file);
     }
 
