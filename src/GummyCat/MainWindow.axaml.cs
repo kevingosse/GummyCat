@@ -24,7 +24,6 @@ namespace GummyCat;
 
 public partial class MainWindow : Window
 {
-    private readonly ManualResetEventSlim _mutex = new();
     private bool _realSize = true;
     private bool _showReservedMemory = true;
     private bool _showEmptyMemory = false;
@@ -134,8 +133,6 @@ public partial class MainWindow : Window
 
         _frames = session.Frames.ToList();
 
-        GCs.Clear();
-
         foreach (var gc in session.GCs)
         {
             GCs.Add(gc);
@@ -164,8 +161,9 @@ public partial class MainWindow : Window
 
     private Task Listen(int pid, CancellationToken cancellationToken)
     {
-        var inspectProcessTask = Task.Factory.StartNew(() => InspectProcess(pid, cancellationToken), TaskCreationOptions.LongRunning);
-        _mutex.Set();
+        var mutex = new ManualResetEventSlim(true);
+
+        var inspectProcessTask = Task.Factory.StartNew(() => InspectProcess(pid, mutex, cancellationToken), TaskCreationOptions.LongRunning);
 
         var session = CreateSession(pid);
         var source = new EventPipeEventSource(session.EventStream);
@@ -175,7 +173,7 @@ public partial class MainWindow : Window
         {
             process.AddCallbackOnDotNetRuntimeLoad(runtime =>
             {
-                runtime.GCEnd += (p, gc) => GCEnd(p, gc, cancellationToken);
+                runtime.GCEnd += (p, gc) => GCEnd(p, gc, mutex, cancellationToken);
             });
         });
 
@@ -190,16 +188,17 @@ public partial class MainWindow : Window
         return inspectProcessTask;
     }
 
-    private void GCEnd(TraceProcess process, TraceGC gc, CancellationToken cancellationToken)
+    private void GCEnd(TraceProcess process, TraceGC gc, ManualResetEventSlim mutex, CancellationToken cancellationToken)
     {
         Dispatcher.UIThread.InvokeAsync(() =>
         {
-            GCs.Insert(0, new(gc));
+            GCs.Add(new(gc));
+            //GCs.Insert(0, new(gc));
         },
         DispatcherPriority.Default,
         cancellationToken);
 
-        _mutex.Set();
+        mutex.Set();
     }
 
     private static EventPipeSession CreateSession(int pid)
@@ -239,20 +238,20 @@ public partial class MainWindow : Window
         });
     }
 
-    private void InspectProcess(int pid, CancellationToken cancellationToken)
+    private void InspectProcess(int pid, ManualResetEventSlim mutex, CancellationToken cancellationToken)
     {
         while (true)
         {
             try
             {
-                _mutex.Wait(cancellationToken);
+                mutex.Wait(cancellationToken);
             }
             catch (OperationCanceledException)
             {
                 break;
             }
 
-            _mutex.Reset();
+            mutex.Reset();
 
             if (cancellationToken.IsCancellationRequested)
             {
@@ -276,7 +275,7 @@ public partial class MainWindow : Window
             {
                 PrivateMemoryMb = privateMemoryMb,
                 SubHeaps = subHeaps,
-                GcNumber = GCs.Count > 0 ? GCs[0].Number : -1
+                GcNumber = GCs.Count > 0 ? GCs.Last().Number : -1
             };
 
             Dispatcher.UIThread.InvokeAsync(() => AddFrame(frame), DispatcherPriority.Default, cancellationToken);
@@ -294,6 +293,7 @@ public partial class MainWindow : Window
         }
 
         _frames.Clear();
+        GCs.Clear();
         RegionsGrid.SetRegions(new List<SubHeap>());
         PanelRegions.Children.Clear();
         SliderFrames.Minimum = 0;
