@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Media;
+using Avalonia.Media.Transformation;
 using GummyCat.Models;
 using Microsoft.Diagnostics.Runtime;
 
@@ -86,16 +88,10 @@ namespace GummyCat
                 color = Colors.Red;
             }
 
-            if (previousSegment == null)
-            {
-                _mainColor.Color = color;
-                FillRectangle.Width = Width * GetFillFactor(segment);
-            }
-            else
-            {
-                _mainColor.Color = color;
-                FillRectangle.Width = Width * GetFillFactor(segment);
-            }
+            _mainColor.Color = color;
+            FillRectangle.Width = 1;
+            FillRectangle.SetValue(Rectangle.RenderTransformProperty, TransformOperations.Parse($"scaleX({Width * GetFillFactor(segment)})"));
+            //FillRectangle.Width = Width * GetFillFactor(segment);
         }
 
         private void ApplySegmentEphemeral(Segment segment, Segment? previousSegment, int heap)

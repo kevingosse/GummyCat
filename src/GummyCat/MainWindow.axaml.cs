@@ -367,8 +367,18 @@ public partial class MainWindow : Window
             RegionsGrid.IsVisible = false;
 
             var regions = PanelRegions.Children.OfType<Region>().ToList();
-            var newRegions = new List<Region>();
 
+            foreach (var region in regions)
+            {
+                // First, mark all regions for deletion
+                region.Tag = this;
+            }
+
+            // Then, remove the placeholders
+            var placeholders = PanelRegions.Children.OfType<Grid>().ToList();
+            PanelRegions.Children.RemoveAll(placeholders);
+
+            // Now update existing regions and create new ones
             foreach (var heap in subHeaps)
             {
                 foreach (var segment in heap.Segments.OrderBy(s => s.Start))
@@ -389,62 +399,79 @@ public partial class MainWindow : Window
                     if (region == null)
                     {
                         region = new Region(segment, heap.Index, _realSize, _showReservedMemory);
+
+                        // Find where to insert it
+                        int i = 0;
+
+                        while (i < PanelRegions.Children.Count)
+                        {
+                            var existingRegion = (Region)PanelRegions.Children[i];
+
+                            if (existingRegion.Address > region.Address)
+                            {
+                                break;
+                            }
+
+                            i++;
+                        }
+
+                        PanelRegions.Children.Insert(i, region);
                     }
                     else
                     {
                         region.Update(segment, heap.Index, _realSize, _showReservedMemory);
-                    }
-
-                    newRegions.Add(region);
-                }
-            }
-
-            foreach (var region in regions)
-            {
-                if (!newRegions.Any(r => r.Address == region.Address) && !region.IsDeleted)
-                {
-                    if (!_showEmptyMemory)
-                    {
-                        region.Delete();
-                        newRegions.Add(region);
+                        region.Tag = null;
                     }
                 }
             }
+            
+            // Remove regions that weren't marked
+            PanelRegions.Children.RemoveAll(regions.Where(r => r.Tag != null));
 
-            PanelRegions.Children.Clear();
-
-            ulong lastRegionEnd = 0;
-
-            foreach (var region in newRegions.OrderBy(r => r.Segment.Start))
+            if (_showEmptyMemory)
             {
-                var start = region.Segment.Start;
-                var end = region.Segment.ReservedMemory.End;
+                // Add the placeholders
+                ulong lastRegionEnd = 0;
 
-                if (_realSize && _showEmptyMemory && lastRegionEnd != 0)
+                for (int i = 0; i < PanelRegions.Children.Count; i++)  
                 {
-                    var diff = start - lastRegionEnd;
-                    var diffInMB = ToMB(diff);
+                    var region = PanelRegions.Children[i] as Region;
 
-                    var placeholder = new Grid { Width = diffInMB * 10, Height = 40 };
-
-                    placeholder.Children.Add(new Rectangle { Fill = new SolidColorBrush(Colors.LightGray), });
-
-                    placeholder.Children.Add(new TextBlock
+                    if (region == null)
                     {
-                        HorizontalAlignment = diffInMB < 10 ? HorizontalAlignment.Center : HorizontalAlignment.Left,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Text = $"{diffInMB} MB",
-                        FontSize = 14,
-                        FontWeight = FontWeight.Bold,
-                        Margin = diffInMB < 10 ? new Thickness(0) : new Thickness(5)
-                    });
+                        continue;
+                    }
 
-                    PanelRegions.Children.Add(placeholder);
+                    var start = region.Segment.Start;
+                    var end = region.Segment.ReservedMemory.End;
+
+                    if (lastRegionEnd != 0)
+                    {
+                        var diff = start - lastRegionEnd;
+                        var diffInMB = ToMB(diff);
+
+                        if (diffInMB > 0)
+                        {
+                            var placeholder = new Grid { Width = _realSize ? diffInMB * 10 : 80, Height = 40 };
+
+                            placeholder.Children.Add(new Rectangle { Fill = new SolidColorBrush(Colors.LightGray), });
+
+                            placeholder.Children.Add(new TextBlock
+                            {
+                                HorizontalAlignment = diffInMB < 10 ? HorizontalAlignment.Center : HorizontalAlignment.Left,
+                                VerticalAlignment = VerticalAlignment.Center,
+                                Text = $"{diffInMB} MB",
+                                FontSize = 14,
+                                FontWeight = FontWeight.Bold,
+                                Margin = diffInMB < 10 ? new Thickness(0) : new Thickness(5)
+                            });
+
+                            PanelRegions.Children.Insert(i + 1, placeholder);
+                        }
+                    }
+
+                    lastRegionEnd = end;
                 }
-
-                lastRegionEnd = end;
-
-                PanelRegions.Children.Add(region);
             }
         }
     }
