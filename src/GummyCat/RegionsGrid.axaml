@@ -4,7 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="GummyCat.RegionsGrid" PointerMoved="OnPointerMoved" PointerExited="OnPointerExited"   >
-    <Grid >
-        <Canvas x:Name="HoverPanel" />
-    </Grid>
+  <Grid>
+    <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Auto">
+      <Canvas x:Name="HoverPanel" />
+    </ScrollViewer>
+  </Grid>
 </UserControl>

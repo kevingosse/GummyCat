@@ -28,6 +28,10 @@ namespace GummyCat
         {
             _subHeaps = subHeaps;
             ComputeRegions();
+
+            var lines = _regions.Sum(r => r.end - r.start) / RectanglesPerLine + 1;
+            HoverPanel.Height = lines * RegionSize;
+
             InvalidateVisual();
 
             Hover(_lastPointerPosition);

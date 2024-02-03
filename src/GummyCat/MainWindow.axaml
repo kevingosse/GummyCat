@@ -61,6 +61,7 @@
 			<RadioButton x:Name="RadioLogical" GroupName="Size" IsChecked="False" Content="Logical" Checked="RadioLogical_Checked"  />
 			<CheckBox x:Name="ToggleEmpty" Content="Show empty memory" IsChecked="False" Click="ToggleEmpty_Click" />
 			<CheckBox x:Name="ToggleTiles" Content="Tiled view" IsChecked="False" Click="ToggleTiles_Click" />
+      <Button x:Name="ForceRefresh" Content="Refresh" />
 		</StackPanel>
 
 		<ScrollViewer Grid.Row="1" Grid.Column="0" VerticalScrollBarVisibility="Auto">

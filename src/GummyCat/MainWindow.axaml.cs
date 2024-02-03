@@ -39,6 +39,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        ForceRefresh.Click += ButtonRefresh_Click;
+
         _playTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(500)
@@ -159,10 +161,13 @@ public partial class MainWindow : Window
         }
     }
 
+    private ManualResetEventSlim _mutex;
+
     private Task Listen(int pid, CancellationToken cancellationToken)
     {
         var mutex = new ManualResetEventSlim(true);
 
+        _mutex = mutex;
         var inspectProcessTask = Task.Factory.StartNew(() => InspectProcess(pid, mutex, cancellationToken), TaskCreationOptions.LongRunning);
 
         var session = CreateSession(pid);
@@ -631,6 +636,11 @@ public partial class MainWindow : Window
         {
             SliderFrames.Value++;
         }
+    }
+
+    private void ButtonRefresh_Click(object? sender, EventArgs e)
+    {        
+        _mutex.Set();
     }
 
     private void Window_KeyDown(object sender, KeyEventArgs e)
