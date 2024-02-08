@@ -389,10 +389,10 @@ public partial class MainWindow : Window
                         continue;
                     }
 
-                    if (segment.Generation == Generation.Frozen)
-                    {
-                        continue;
-                    }
+                    //if (segment.Generation == Generation.Frozen)
+                    //{
+                    //    continue;
+                    //}
 
                     var region = regions.FirstOrDefault(r => r.Address == segment.Start);
 

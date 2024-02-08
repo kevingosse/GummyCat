@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -11,7 +12,7 @@ namespace GummyCat
 {
     public partial class RegionsGrid : UserControl
     {
-        private const int RegionSize = 20;
+        internal const int RegionSize = 20;
 
         private IReadOnlyList<SubHeap>? _subHeaps;
         private List<(int start, int end, Segment? region, SubHeap? subHeap)> _regions = new();
@@ -22,7 +23,7 @@ namespace GummyCat
             InitializeComponent();
         }
 
-        protected int RectanglesPerLine => (int)(Bounds.Width / RegionSize);
+        protected int RectanglesPerLine => (int)(RenderSurface.Bounds.Width / RegionSize);
 
         public void SetRegions(IReadOnlyList<SubHeap> subHeaps)
         {
@@ -55,15 +56,10 @@ namespace GummyCat
                 if (segment.Flags.HasFlag((ClrSegmentFlags)32))
                 {
                     Debug.WriteLine($"Skipping decommitted region - {segment.Address:x2}");
-                    //continue;
+                    continue;
                 }
 
                 var generation = segment.Generation;
-
-                if (generation == Generation.Frozen)
-                {
-                    continue;
-                }
 
                 var start = segment.Start;
                 var end = segment.ReservedMemory.End;
@@ -90,92 +86,14 @@ namespace GummyCat
                 index += sizeUnits;
                 lastRegionEnd = end;
             }
+
+            RenderSurface.SetRegions(_regions);
         }
 
         private static double ToUnits(ulong length, bool roundUp = true)
         {
             var value = length / (1024.0 * 1024);
             return roundUp ? Math.Ceiling(value) : Math.Floor(value);
-        }
-
-        public override void Render(DrawingContext drawingContext)
-        {
-            var line = 0;
-            var column = 0;
-            var rectanglesPerLine = RectanglesPerLine;
-
-            void DrawRectangle(Color color, bool first, bool last, int? heapIndex = null)
-            {
-                // Can we fit another rectangle on this line?
-                if (column >= rectanglesPerLine)
-                {
-                    line++;
-                    column = 0;
-                }
-
-                var position = new Point(column * RegionSize, line * RegionSize);
-
-                var lineColor = Colors.White;
-
-                drawingContext.DrawRectangle(
-                    new SolidColorBrush(color),
-                    new Pen(new SolidColorBrush(lineColor), 1.0),
-                    new Rect(position, new Size(RegionSize, RegionSize)));
-
-                column++;
-            }
-
-            foreach (var (start, end, segment, subHeap) in _regions)
-            {
-                if (segment == null)
-                {
-                    // Empty memory
-                    for (int i = start; i < end; i++)
-                    {
-                        DrawRectangle(Colors.LightGray, i == start, i == end - 1);
-                    }
-
-                    continue;
-                }
-
-                var generation = segment.Generation;
-
-                if (segment.Kind == GCSegmentKind.Ephemeral)
-                {
-                    var gen1Size = ToUnits(segment.Generation1.Length);
-                    var gen2Size = ToUnits(segment.Generation2.Length);
-                    var gen0Size = ToUnits(segment.ReservedMemory.End - segment.Start) - gen1Size - gen2Size;
-
-                    for (int i = 0; i < gen2Size; i++)
-                    {
-                        DrawRectangle(Region.GetColor(Generation.Generation2), i == 0, i == (int)gen2Size - 1, subHeap.Index);
-                    }
-
-                    for (int i = 0; i < gen1Size; i++)
-                    {
-                        DrawRectangle(Region.GetColor(Generation.Generation1), i == 0, i == (int)gen1Size - 1, subHeap.Index);
-                    }
-
-                    for (int i = 0; i < gen0Size; i++)
-                    {
-                        DrawRectangle(Region.GetColor(Generation.Generation0), i == 0, i == (int)gen0Size - 1, subHeap.Index);
-                    }
-                }
-                else
-                {
-                    var color = Region.GetColor(generation);
-
-                    if (segment.Flags.HasFlag((ClrSegmentFlags)32))
-                    {
-                        color = Colors.Red;
-                    }
-
-                    for (int i = start; i < end; i++)
-                    {
-                        DrawRectangle(color, i == start, i == end - 1);
-                    }
-                }
-            }
         }
 
         private void OnMouseMove(object sender, PointerEventArgs e)
@@ -188,8 +106,10 @@ namespace GummyCat
             _lastPointerPosition = mousePosition;
             HoverPanel.Children.Clear();
 
+            var offset = (int)VerticalScrollBar.Value;
+
             // Compute the index of the hovered square
-            var line = (int)(mousePosition.Y / RegionSize);
+            var line = (int)(mousePosition.Y / RegionSize) + offset;
             var column = (int)(mousePosition.X / RegionSize);
 
             var index = line * RectanglesPerLine + column;
@@ -201,9 +121,21 @@ namespace GummyCat
                     continue;
                 }
 
-                for (int i = region.start; i < region.end; i++)
+                var start = Math.Max(region.start, offset * RectanglesPerLine);
+
+                for (int i = start; i < region.end; i++)
                 {
-                    var position = new Point((i % RectanglesPerLine) * RegionSize, (i / RectanglesPerLine) * RegionSize);
+                    var position = new Point((i % RectanglesPerLine) * RegionSize, ((i / RectanglesPerLine) - offset) * RegionSize);
+
+                    if (position.Y < 0)
+                    {
+                        continue;
+                    }
+
+                    if (position.Y > HoverPanel.Bounds.Width)
+                    {
+                        return;
+                    }
 
                     var borderThickness = 2.0;
 
@@ -247,9 +179,155 @@ namespace GummyCat
             HoverPanel.Children.Clear();
         }
 
-        private void OnPointerMoved(object? sender, Avalonia.Input.PointerEventArgs e)
+        private void OnPointerMoved(object? sender, PointerEventArgs e)
         {
             Hover(e.GetPosition(this));
+        }
+
+        private void ScrollBar_Scroll(object? sender, ScrollEventArgs e)
+        {
+            RenderSurface.SetOffset((int)e.NewValue);
+        }
+    }
+
+    public class TilesRenderSurface : Control
+    {
+        private const int RegionSize = RegionsGrid.RegionSize;
+        protected int RectanglesPerLine => (int)(Bounds.Width / RegionSize);
+
+        private List<(int start, int end, Segment? region, SubHeap? subHeap)> _regions = new();
+
+        private int _offset;
+
+        public void SetRegions(List<(int start, int end, Segment? region, SubHeap? subHeap)> regions)
+        {
+            _regions = regions;
+            InvalidateVisual();
+        }
+
+        public void SetOffset(int offset)
+        {
+            if (offset != _offset)
+            {
+                _offset = offset;
+                InvalidateVisual();
+            }
+        }
+
+        public override void Render(DrawingContext drawingContext)
+        {
+            var line = 0;
+            var column = 0;
+            var rectanglesPerLine = RectanglesPerLine;
+
+            var maxLine = Math.Ceiling(Bounds.Height / RegionSize) + _offset;
+
+            void DrawRectangle(Color color, bool first, bool last, int? heapIndex = null)
+            {
+                // Can we fit another rectangle on this line?
+                if (column >= rectanglesPerLine)
+                {
+                    line++;
+                    column = 0;
+                }
+
+                if (line >= _offset)
+                {
+                    var position = new Point(column * RegionSize, (line - _offset) * RegionSize);
+
+                    var lineColor = Colors.White;
+
+                    drawingContext.DrawRectangle(
+                        new SolidColorBrush(color),
+                        new Pen(new SolidColorBrush(lineColor), 1.0),
+                        new Rect(position, new Size(RegionSize, RegionSize)));
+                }
+
+                column++;
+            }
+
+            foreach (var (start, end, segment, subHeap) in _regions)
+            {
+                if (segment == null)
+                {
+                    // Empty memory
+                    for (int i = start; i < end; i++)
+                    {
+                        DrawRectangle(Colors.LightGray, i == start, i == end - 1);
+
+                        if (line > maxLine)
+                        {
+                            return;
+                        }
+                    }
+
+                    continue;
+                }
+
+                var generation = segment.Generation;
+
+                if (segment.Kind == GCSegmentKind.Ephemeral)
+                {
+                    var gen1Size = ToUnits(segment.Generation1.Length);
+                    var gen2Size = ToUnits(segment.Generation2.Length);
+                    var gen0Size = ToUnits(segment.ReservedMemory.End - segment.Start) - gen1Size - gen2Size;
+
+                    for (int i = 0; i < gen2Size; i++)
+                    {
+                        DrawRectangle(Region.GetColor(Generation.Generation2), i == 0, i == (int)gen2Size - 1, subHeap.Index);
+
+                        if (line > maxLine)
+                        {
+                            return;
+                        }
+                    }
+
+                    for (int i = 0; i < gen1Size; i++)
+                    {
+                        DrawRectangle(Region.GetColor(Generation.Generation1), i == 0, i == (int)gen1Size - 1, subHeap.Index);
+
+                        if (line > maxLine)
+                        {
+                            return;
+                        }
+                    }
+
+                    for (int i = 0; i < gen0Size; i++)
+                    {
+                        DrawRectangle(Region.GetColor(Generation.Generation0), i == 0, i == (int)gen0Size - 1, subHeap.Index);
+
+                        if (line > maxLine)
+                        {
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    var color = Region.GetColor(generation);
+
+                    if (segment.Flags.HasFlag((ClrSegmentFlags)32))
+                    {
+                        color = Colors.Red;
+                    }
+
+                    for (int i = start; i < end; i++)
+                    {
+                        DrawRectangle(color, i == start, i == end - 1);
+
+                        if (line > maxLine)
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static double ToUnits(ulong length, bool roundUp = true)
+        {
+            var value = length / (1024.0 * 1024);
+            return roundUp ? Math.Ceiling(value) : Math.Floor(value);
         }
     }
 }
