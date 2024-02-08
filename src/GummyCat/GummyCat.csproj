@@ -12,14 +12,15 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="11.0.5" />
-		<PackageReference Include="Avalonia.Desktop" Version="11.0.5" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.5" />
-		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.5" />
+		<PackageReference Include="Avalonia" Version="11.0.8" />
+		<PackageReference Include="Avalonia.Desktop" Version="11.0.8" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.0.8" />
+		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.0.8" />
 		<!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-		<PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.5" />
-		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="3.1.456101" />
-		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.6" />
+		<!--<PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.0.5" />-->
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.0.5" />
+		<PackageReference Include="Microsoft.Diagnostics.Runtime" Version="3.1.506101" />
+		<PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.8" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 

@@ -2,9 +2,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:gummyCat="clr-namespace:GummyCat"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="GummyCat.RegionsGrid" PointerMoved="OnPointerMoved" PointerExited="OnPointerExited"   >
-    <Grid >
-        <Canvas x:Name="HoverPanel" />
-    </Grid>
+  <Grid ColumnDefinitions="* Auto">
+    <ScrollBar x:Name="VerticalScrollBar" Grid.Column="1" Orientation="Vertical" Scroll="ScrollBar_Scroll" />
+    <gummyCat:TilesRenderSurface x:Name="RenderSurface" Grid.Column="0" />
+    <Canvas x:Name="HoverPanel" Grid.Column="0" />
+  </Grid>
 </UserControl>
