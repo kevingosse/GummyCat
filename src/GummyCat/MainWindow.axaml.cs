@@ -24,10 +24,9 @@ namespace GummyCat;
 
 public partial class MainWindow : Window
 {
-    private bool _realSize = true;
     private bool _showReservedMemory = true;
     private bool _showEmptyMemory = false;
-    private bool _tiledView = false;
+    private bool _tiledView = true;
     private List<Frame> _frames = new();
     private Frame? _activeFrame;
     private bool _playing = true;
@@ -127,6 +126,8 @@ public partial class MainWindow : Window
 
     private void Load(string fileName)
     {
+        TextTarget.Text = $"Trace: {System.IO.Path.GetFileName(fileName)}";
+
         var json = File.ReadAllText(fileName);
 
         var session = JsonConvert.DeserializeObject<Session>(json)!;
@@ -398,7 +399,7 @@ public partial class MainWindow : Window
 
                     if (region == null)
                     {
-                        region = new Region(segment, heap.Index, _realSize, _showReservedMemory);
+                        region = new Region(segment, heap.Index, _showReservedMemory);
 
                         // Find where to insert it
                         int i = 0;
@@ -419,7 +420,7 @@ public partial class MainWindow : Window
                     }
                     else
                     {
-                        region.Update(segment, heap.Index, _realSize, _showReservedMemory);
+                        region.Update(segment, heap.Index, _showReservedMemory);
                         region.Tag = null;
                     }
                 }
@@ -452,7 +453,7 @@ public partial class MainWindow : Window
 
                         if (diffInMB > 0)
                         {
-                            var placeholder = new Grid { Width = _realSize ? diffInMB * 10 : 80, Height = 40 };
+                            var placeholder = new Grid { Width = 120, Height = 40 };
 
                             placeholder.Children.Add(new Rectangle { Fill = new SolidColorBrush(Colors.LightGray), });
 
@@ -504,36 +505,35 @@ public partial class MainWindow : Window
         }
     }
 
-    private void RadioReal_Checked(object sender, RoutedEventArgs e)
+    private void RadioReserved_Checked(object sender, RoutedEventArgs e)
     {
-        _realSize = true;
-        _showReservedMemory = true;
-        RefreshView();
-    }
-
-    private void RadioLogical_Checked(object sender, RoutedEventArgs e)
-    {
-        _realSize = false;
         _showReservedMemory = true;
         RefreshView();
     }
 
     private void RadioCommitted_Checked(object sender, RoutedEventArgs e)
     {
-        _realSize = true;
         _showReservedMemory = false;
+        RefreshView();
+    }
+
+    private void RadioReal_Checked(object sender, RoutedEventArgs e)
+    {
+        _tiledView = true;
+        PanelLogical.IsVisible = false;
+        RefreshView();
+    }
+
+    private void RadioLogical_Checked(object sender, RoutedEventArgs e)
+    {
+        _tiledView = false;
+        PanelLogical.IsVisible = true;
         RefreshView();
     }
 
     private void ToggleEmpty_Click(object sender, RoutedEventArgs e)
     {
         _showEmptyMemory = ToggleEmpty.IsChecked == true;
-        RefreshView();
-    }
-
-    private void ToggleTiles_Click(object sender, RoutedEventArgs e)
-    {
-        _tiledView = ToggleTiles.IsChecked == true;
         RefreshView();
     }
 

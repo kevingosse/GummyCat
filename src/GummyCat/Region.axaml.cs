@@ -10,7 +10,6 @@ namespace GummyCat
 {
     public partial class Region : UserControl
     {
-        private bool _realSize;
         private bool _showReservedMemory;
         private SolidColorBrush _mainColor;
 
@@ -21,9 +20,8 @@ namespace GummyCat
             _mainColor = (SolidColorBrush)MainRectangle.Fill!;
         }
 
-        public Region(Segment segment, int heap, bool realSize, bool showReservedMemory)
+        public Region(Segment segment, int heap, bool showReservedMemory)
         {
-            _realSize = realSize;
             _showReservedMemory = showReservedMemory;
             Segment = segment;
 
@@ -42,9 +40,8 @@ namespace GummyCat
 
         public Segment Segment { get; private set; }
 
-        public void Update(Segment newSegment, int heap, bool realSize, bool showReservedMemory)
+        public void Update(Segment newSegment, int heap, bool showReservedMemory)
         {
-            _realSize = realSize;
             _showReservedMemory = showReservedMemory;
             ApplySegment(newSegment, Segment, heap);
             Segment = newSegment;
@@ -66,17 +63,8 @@ namespace GummyCat
 
             TextHeap.Text = heap.ToString();
 
-            if (_realSize)
-            {
-                var size = (long)ToMB(SegmentSize(segment, _showReservedMemory));
-                Width = size * 10;
-            }
-            else
-            {
-                var size = (long)ToMB(SegmentSize(segment, true));
-                Width = size <= 4 ? 40 : 80;
-            }
-
+            var size = (long)ToMB(SegmentSize(segment, _showReservedMemory));
+            Width = size * 10;
             Height = 40;
             Margin = new Thickness(Width <= 1 ? 0 : 1);
 
@@ -109,21 +97,9 @@ namespace GummyCat
 
             TextHeap.Text = heap.ToString();
 
-            ulong size;
-
-            if (_realSize)
-            {
-                size = SegmentSize(segment, _showReservedMemory);
-                var sizeInMb = (long)ToMB(size);
-                Width = sizeInMb * 10;
-            }
-            else
-            {
-                size = SegmentSize(segment, true);
-                Width = 200;
-                size = segment.Generation2.Length + segment.Generation1.Length + segment.Generation0.Length;
-            }
-
+            var size = SegmentSize(segment, _showReservedMemory);
+            var sizeInMb = (long)ToMB(size);
+            Width = sizeInMb * 10;
             Height = 40;
 
             Margin = new Thickness(1);

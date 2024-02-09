@@ -11,7 +11,7 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>gummycat</ToolCommandName>
-    <PackageVersion>0.1.0</PackageVersion>
+    <PackageVersion>0.2.0</PackageVersion>
     <Description>A tool to visualize the GC activity of a .NET application, in a nice UI.</Description>
     <Authors>Kevin Gosse</Authors>
     <PackageProjectUrl>https://github.com/kevingosse/GummyCat</PackageProjectUrl>

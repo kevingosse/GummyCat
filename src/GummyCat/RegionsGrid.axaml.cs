@@ -87,6 +87,10 @@ namespace GummyCat
                 lastRegionEnd = end;
             }
 
+            var totalLines = Math.Ceiling((double)index / RectanglesPerLine);
+            var linesOnScreen = Math.Ceiling(RenderSurface.Bounds.Height / RegionSize);
+
+            VerticalScrollBar.Maximum = totalLines - linesOnScreen;
             RenderSurface.SetRegions(_regions);
         }
 
@@ -94,11 +98,6 @@ namespace GummyCat
         {
             var value = length / (1024.0 * 1024);
             return roundUp ? Math.Ceiling(value) : Math.Floor(value);
-        }
-
-        private void OnMouseMove(object sender, PointerEventArgs e)
-        {
-            Hover(e.GetPosition(this));
         }
 
         private void Hover(Point mousePosition)
@@ -119,6 +118,12 @@ namespace GummyCat
                 if (region.start > index || region.end <= index)
                 {
                     continue;
+                }
+
+                if (region.subHeap == null)
+                {
+                    // For now, for performance reason, don't hover over empty regions
+                    return;
                 }
 
                 var start = Math.Max(region.start, offset * RectanglesPerLine);
@@ -184,7 +189,7 @@ namespace GummyCat
             Hover(e.GetPosition(this));
         }
 
-        private void ScrollBar_Scroll(object? sender, ScrollEventArgs e)
+        private void VerticalScrollBar_Scroll(object? sender, ScrollEventArgs e)
         {
             RenderSurface.SetOffset((int)e.NewValue);
         }
@@ -248,7 +253,7 @@ namespace GummyCat
 
             foreach (var (start, end, segment, subHeap) in _regions)
             {
-                if (segment == null)
+                if (subHeap == null)
                 {
                     // Empty memory
                     for (int i = start; i < end; i++)
@@ -264,7 +269,7 @@ namespace GummyCat
                     continue;
                 }
 
-                var generation = segment.Generation;
+                var generation = segment!.Generation;
 
                 if (segment.Kind == GCSegmentKind.Ephemeral)
                 {

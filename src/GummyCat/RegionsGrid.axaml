@@ -6,7 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="GummyCat.RegionsGrid" PointerMoved="OnPointerMoved" PointerExited="OnPointerExited"   >
   <Grid ColumnDefinitions="* Auto">
-    <ScrollBar x:Name="VerticalScrollBar" Grid.Column="1" Orientation="Vertical" Scroll="ScrollBar_Scroll" />
+    <ScrollBar x:Name="VerticalScrollBar" Grid.Column="1" Orientation="Vertical" Scroll="VerticalScrollBar_Scroll" />
     <gummyCat:TilesRenderSurface x:Name="RenderSurface" Grid.Column="0" />
     <Canvas x:Name="HoverPanel" Grid.Column="0" />
   </Grid>
