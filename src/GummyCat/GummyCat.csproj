@@ -9,6 +9,15 @@
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>gummycat</ToolCommandName>
+    <PackageVersion>0.1.0</PackageVersion>
+    <Description>A tool to visualize the GC activity of a .NET application, in a nice UI.</Description>
+    <Authors>Kevin Gosse</Authors>
+    <PackageProjectUrl>https://github.com/kevingosse/GummyCat</PackageProjectUrl>
+    <PackageTags>diagnostic gc</PackageTags>
+    <PackageReadmeFile>Readme.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/kevingosse/GummyCat</RepositoryUrl>
 	</PropertyGroup>
 
 
@@ -32,5 +41,6 @@
 	  <Compile Update="RegionsGrid.axaml.cs">
 	    <DependentUpon>RegionsGrid.axaml</DependentUpon>
 	  </Compile>
+    <None Include="Readme.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 </Project>
