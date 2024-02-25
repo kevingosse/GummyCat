@@ -2,20 +2,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:models="clr-namespace:GummyCat.Models"
         xmlns:gummyCat="clr-namespace:GummyCat"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="GummyCat.ProcessPickerDialog"
-        Title="ProcessPickerDialog"
+        Title="Attach to process..."
         Padding="10"
         Width="500"
         Height="400">
-  <Grid RowDefinitions="Auto * Auto">
-    <TextBlock Text="Attach to process..." Grid.Row="0" />
-
+  <Grid RowDefinitions="* Auto">
     <DataGrid
       x:Name="GridProcesses"
-      Grid.Row="1"
+      Grid.Row="0"
       Margin="0 10 0 10"
       ItemsSource="{Binding Path=Processes}"
       x:DataType="gummyCat:ProcessPickerDialog"
@@ -28,7 +25,7 @@
       </DataGrid.Columns>
     </DataGrid>
 
-    <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right">
+    <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right">
       <Button x:Name="ButtonAttach" Content="Attach" IsEnabled="{Binding Path=#GridProcesses.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" Click="ButtonAttach_Click" />
       <Button x:Name="ButtonCancel" Margin="10 0 0 0" Content="Cancel" Click="ButtonCancel_Click" />
     </StackPanel>
