@@ -15,11 +15,25 @@ public partial class ProcessPickerDialog : Window
 
         DataContext = this;
 
-        var pids = DiagnosticsClient.GetPublishedProcesses();
+        var processes = DiagnosticsClient.GetPublishedProcesses()
+            .Select(pid =>
+            {
+                try
+                {
+                    return Process.GetProcessById(pid);
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            });
 
         Processes = new(
-            pids.Where(pid => pid != Environment.ProcessId)
-                .Select(pid => new Models.TargetProcess(Process.GetProcessById(pid)))
+            processes
+                .Where(p => p is not null)
+                .Cast<Process>()
+                .Where(p => p.Id != Environment.ProcessId)
+                .Select(p => new Models.TargetProcess(p))
                 .OrderByDescending(p => p.StartTime));
 
         InitializeComponent();
