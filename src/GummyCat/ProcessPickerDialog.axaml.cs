@@ -22,7 +22,7 @@ public partial class ProcessPickerDialog : Window
                 {
                     return Process.GetProcessById(pid);
                 }
-                catch (Exception)
+                catch (ArgumentException e) when (e.Message.Contains("is not running"))
                 {
                     return null;
                 }
