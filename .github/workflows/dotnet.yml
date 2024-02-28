@@ -23,13 +23,4 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --no-restore
-    - name: Publish
-      run: dotnet pack -c Release -o gummycat.nupkg
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v4.3.1
-      with:
-        name: gummycat.nupkg
-        path: gummycat.nupkg    
-        if-no-files-found: error
-        compression-level: 0
+      run: dotnet build --no-restore -c Release
