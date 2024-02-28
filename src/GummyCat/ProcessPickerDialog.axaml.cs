@@ -22,7 +22,7 @@ public partial class ProcessPickerDialog : Window
                 {
                     return Process.GetProcessById(pid);
                 }
-                catch (ArgumentException e) when (e.Message.Contains("is not running"))
+                catch (ArgumentException)
                 {
                     return null;
                 }
@@ -30,10 +30,8 @@ public partial class ProcessPickerDialog : Window
 
         Processes = new(
             processes
-                .Where(p => p is not null)
-                .Cast<Process>()
-                .Where(p => p.Id != Environment.ProcessId)
-                .Select(p => new Models.TargetProcess(p))
+                .Where(p => p is not null && p.Id != Environment.ProcessId)
+                .Select(p => new Models.TargetProcess(p!))
                 .OrderByDescending(p => p.StartTime));
 
         InitializeComponent();
