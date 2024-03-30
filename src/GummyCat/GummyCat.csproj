@@ -12,12 +12,13 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>gummycat</ToolCommandName>
-    <PackageVersion>0.2.2</PackageVersion>
+    <PackageVersion>0.2.3</PackageVersion>
     <Description>A tool to visualize the GC activity of a .NET application, in a nice UI.</Description>
     <Authors>Kevin Gosse</Authors>
     <PackageProjectUrl>https://github.com/kevingosse/GummyCat</PackageProjectUrl>
     <PackageTags>diagnostic gc</PackageTags>
     <PackageReadmeFile>Readme.md</PackageReadmeFile>
+    <PackageIcon>gummycat-256.png</PackageIcon>
     <RepositoryUrl>https://github.com/kevingosse/GummyCat</RepositoryUrl>
 	</PropertyGroup>
 	<ItemGroup>
@@ -49,5 +50,6 @@
 	    <DependentUpon>RegionsGrid.axaml</DependentUpon>
 	  </Compile>
     <None Include="Readme.md" Pack="true" PackagePath="\" />
+    <None Include="Assets\gummycat-256.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 </Project>
