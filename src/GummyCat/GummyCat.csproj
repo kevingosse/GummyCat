@@ -7,7 +7,8 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>Assets/gummycat.ico</ApplicationIcon>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <InvariantGlobalization>true</InvariantGlobalization>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>gummycat</ToolCommandName>
@@ -19,6 +20,12 @@
     <PackageReadmeFile>Readme.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/kevingosse/GummyCat</RepositoryUrl>
 	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="gummycat.ico" />
+	</ItemGroup>
+	<ItemGroup>
+	  <AvaloniaResource Include="Assets\gummycat.ico" />
+	</ItemGroup>
 
 
 	<ItemGroup>
