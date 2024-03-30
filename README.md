@@ -1,4 +1,6 @@
-# GummyCat
+# ![pixelicon-48](https://github.com/kevingosse/GummyCat/assets/11140081/12811aab-6fe8-4afd-b10c-451bbab8bf86) GummyCat
+
+
 
 A tool to visualize the activity of the .NET garbage collector.
 
