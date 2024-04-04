@@ -22,10 +22,13 @@
     <RepositoryUrl>https://github.com/kevingosse/GummyCat</RepositoryUrl>
 	</PropertyGroup>
 	<ItemGroup>
+	  <None Remove="Assets\gummycat.ico" />
+	  <None Remove="Assets\pixelicon-24.png" />
 	  <None Remove="gummycat.ico" />
 	</ItemGroup>
 	<ItemGroup>
 	  <AvaloniaResource Include="Assets\gummycat.ico" />
+	  <AvaloniaResource Include="Assets\pixelicon-24.png" />
 	</ItemGroup>
 
 

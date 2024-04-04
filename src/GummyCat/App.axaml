@@ -8,7 +8,7 @@
     <SimpleTheme />
     <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Simple.xaml"/>
     <Style Selector="Window">
-      <Setter Property="Icon" Value="avares://GummyCat/Assets/gummycat.ico" />
+      <Setter Property="Icon" Value="avares://GummyCat/Assets/pixelicon-24.png" />
     </Style>
   </Application.Styles>
 </Application>
